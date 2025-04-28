@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Send, ChevronDown, Settings, HelpCircle, LogOut } from "lucide-react";
-import { Line, Bar, Pie } from "react-chartjs-2";
+import React, { useState } from 'react'
+import { Send, ChevronDown, Settings, HelpCircle, LogOut } from 'lucide-react'
+import { Line, Bar, Pie } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,24 +12,25 @@ import {
   Title,
   Tooltip,
   Legend,
-} from "chart.js";
-import DataTable from "./DataTable";
-import { supabase } from "../lib/supabase";
-import { chat, ChatMessage, parseAIResponse } from "../lib/ai";
-import { ChatQueryService } from "../lib/chatQueryService";
-import { QueryService, QueryResult } from "../lib/queryService";
+} from 'chart.js'
+import DataTable from './DataTable'
+import { supabase } from '../lib/supabase'
+import { chat, ChatMessage, parseAIResponse } from '../lib/ai'
+import { ChatQueryService } from '../lib/chatQueryService'
+import { QueryService, QueryResult } from '../lib/queryService'
 import {
   DashboardService,
   ChartConfiguration,
   DashboardError,
-} from "../lib/dashboardService";
-import DashboardView from "./DashboardView";
-import { useAccessLevels } from "../lib/hooks";
-import { searchMockColumns, searchMockMetrics } from "../lib/mockdata";
-import type { Profile } from "../lib/types";
-import MetricsView from "./MetricsView";
-import MentionDropdown from "./MentionDropdown";
-import MetricDropdown from "./MetricDropdown";
+} from '../lib/dashboardService'
+import DashboardView from './DashboardView'
+import { useAccessLevels } from '../lib/hooks'
+import { searchMockColumns, searchMockMetrics } from '../lib/mockdata'
+import type { Profile } from '../lib/types'
+import MetricsView from './MetricsView'
+import MentionDropdown from './MentionDropdown'
+import MetricDropdown from './MetricDropdown'
+import { Metric } from '../lib/metricsService'
 
 // Register ChartJS components
 ChartJS.register(
@@ -41,8 +42,8 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
-);
+  Legend,
+)
 
 const chartOptions = {
   responsive: true,
@@ -55,11 +56,11 @@ const chartOptions = {
   scales: {
     x: {
       grid: {
-        color: "rgba(255, 255, 255, 0.1)",
+        color: 'rgba(255, 255, 255, 0.1)',
         drawBorder: false,
       },
       ticks: {
-        color: "#94a3b8",
+        color: '#94a3b8',
         font: {
           size: 12,
         },
@@ -67,29 +68,29 @@ const chartOptions = {
     },
     y: {
       grid: {
-        color: "rgba(255, 255, 255, 0.1)",
+        color: 'rgba(255, 255, 255, 0.1)',
         drawBorder: false,
       },
       ticks: {
-        color: "#94a3b8",
+        color: '#94a3b8',
         font: {
           size: 12,
         },
       },
     },
   },
-};
+}
 
 interface ChatModeProps {
-  profile: Profile;
-  view: "chat" | "dashboard" | "customers" | "revenue" | "metrics";
-  dashboardTitle: string;
-  isNewDashboard?: boolean;
-  isNewMetric?: boolean;
-  metricsTitle: string;
-  showProfileMenu: boolean;
-  setShowProfileMenu: (show: boolean) => void;
-  onSettingsClick: () => void;
+  profile: Profile
+  view: 'chat' | 'dashboard' | 'customers' | 'revenue' | 'metrics'
+  dashboardTitle: string
+  isNewDashboard?: boolean
+  isNewMetric?: boolean
+  metricsTitle: string
+  showProfileMenu: boolean
+  setShowProfileMenu: (show: boolean) => void
+  onSettingsClick: () => void
 }
 
 const ChatMode = ({
@@ -103,50 +104,53 @@ const ChatMode = ({
   setShowProfileMenu,
   onSettingsClick,
 }: ChatModeProps) => {
-  const [message, setMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [currentSession, setCurrentSession] = useState<ChatSession | null>(
-    null
-  );
-  const [executionTime, setExecutionTime] = useState<number | null>(null);
-  const { accessLevels, loading: accessLevelsLoading } = useAccessLevels();
-  const profileRef = React.useRef<HTMLDivElement>(null);
-  const [selectedAccessLevel, setSelectedAccessLevel] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('')
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
+  const [currentSession, setCurrentSession] = useState<ChatSession | null>(null)
+  const [executionTime, setExecutionTime] = useState<number | null>(null)
+  const { accessLevels, loading: accessLevelsLoading } = useAccessLevels()
+  const profileRef = React.useRef<HTMLDivElement>(null)
+  const [selectedAccessLevel, setSelectedAccessLevel] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const [lastQueryResult, setLastQueryResult] = useState<QueryResult | null>(
-    null
-  );
-  const [showSaveDialog, setShowSaveDialog] = React.useState(false);
-  const [savingToDashboard, setSavingToDashboard] = React.useState(false);
+    null,
+  )
+  const [showSaveDialog, setShowSaveDialog] = React.useState(false)
+  const [savingToDashboard, setSavingToDashboard] = React.useState(false)
   const [selectedChartType, setSelectedChartType] = React.useState<
-    "line" | "bar" | "pie"
-  >("line");
-  const [chatQueryId, setChatQueryId] = React.useState<string | null>(null);
-  const [saveError, setSaveError] = React.useState<string | null>(null);
-  const [mentionSearch, setMentionSearch] = React.useState("");
+    'line' | 'bar' | 'pie'
+  >('line')
+  const [chatQueryId, setChatQueryId] = React.useState<string | null>(null)
+  const [saveError, setSaveError] = React.useState<string | null>(null)
+  const [mentionSearch, setMentionSearch] = React.useState('')
   const [mentionPosition, setMentionPosition] = React.useState({
     top: 0,
     left: 0,
-  });
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  })
+  const [metricSearch, setMetricSearch] = React.useState('')
+  const [metricPosition, setMetricPosition] = React.useState({
+    top: 0,
+    left: 0,
+  })
+  const inputRef = React.useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
     if (profile && accessLevels.length > 0) {
       const userAccessLevel = accessLevels.find(
-        (level) => level.id === profile.access_level_id
-      );
+        (level) => level.id === profile.access_level_id,
+      )
       if (userAccessLevel) {
-        setSelectedAccessLevel(userAccessLevel.name);
+        setSelectedAccessLevel(userAccessLevel.name)
       }
     }
-  }, [profile, accessLevels]);
+  }, [profile, accessLevels])
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut()
     if (error) {
-      console.error("Error signing out:", error.message);
+      console.error('Error signing out:', error.message)
     }
-  };
+  }
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -154,88 +158,88 @@ const ChatMode = ({
         profileRef.current &&
         !profileRef.current.contains(event.target as Node)
       ) {
-        setShowProfileMenu(false);
+        setShowProfileMenu(false)
       }
-    };
+    }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (message.trim()) {
-      const startTime = Date.now();
-      setIsLoading(true);
-      const userMessage: ChatMessage = { role: "user", content: message };
-      setChatHistory((prev) => [...prev, userMessage]);
-      setMessage("");
-      let session = currentSession;
+      const startTime = Date.now()
+      setIsLoading(true)
+      const userMessage: ChatMessage = { role: 'user', content: message }
+      setChatHistory((prev) => [...prev, userMessage])
+      setMessage('')
+      let session = currentSession
 
       try {
         // Create or get session
         if (!session) {
           session = await ChatQueryService.createSession(
-            `Chat ${new Date().toLocaleString()}`
-          );
-          setCurrentSession(session);
+            `Chat ${new Date().toLocaleString()}`,
+          )
+          setCurrentSession(session)
         }
 
         // If the message asks about tables, show the data table
         if (
-          message.toLowerCase().includes("table") ||
-          message.toLowerCase().includes("show me")
+          message.toLowerCase().includes('table') ||
+          message.toLowerCase().includes('show me')
         ) {
           const { data: tableData, error: tableError } = await supabase
             .from(
-              message.toLowerCase().includes("orders") ? "orders" : "customers"
+              message.toLowerCase().includes('orders') ? 'orders' : 'customers',
             )
-            .select("*")
-            .limit(100);
+            .select('*')
+            .limit(100)
 
           if (!tableError && tableData) {
             const columns = Object.keys(tableData[0] || {}).map((key) => ({
               name:
-                key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " "),
+                key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
               selector: (row: any) => row[key],
               sortable: true,
-            }));
+            }))
 
             setChatHistory((prev) => [
               ...prev,
               {
-                role: "assistant",
+                role: 'assistant',
                 content: `Here's the data from the ${
-                  message.toLowerCase().includes("orders")
-                    ? "orders"
-                    : "customers"
+                  message.toLowerCase().includes('orders')
+                    ? 'orders'
+                    : 'customers'
                 } table:`,
                 table: {
                   columns,
                   data: tableData,
                 },
               },
-            ]);
-            return;
+            ])
+            return
           }
         }
 
         // Get AI response with SQL
-        const response = await chat([...chatHistory, userMessage]);
-        const { sql } = parseAIResponse(response.content);
+        const response = await chat([...chatHistory, userMessage])
+        const { sql } = parseAIResponse(response.content)
 
         // Execute SQL if present
         if (sql) {
           try {
             const queryResult = await QueryService.executeQuery(sql, {
               prompt: message,
-              source: "chat",
+              source: 'chat',
               name: `Chat Query ${new Date().toLocaleString()}`,
-            });
-            setExecutionTime(Date.now() - startTime);
-            setLastQueryResult(queryResult);
+            })
+            setExecutionTime(Date.now() - startTime)
+            setLastQueryResult(queryResult)
 
-            setChatHistory((prev) => [...prev, response]);
+            setChatHistory((prev) => [...prev, response])
           } catch (queryError) {
             const errorResponse = `
 ${response.content}
@@ -246,77 +250,77 @@ ${sql}
 \`\`\`
 
 But there was an error: ${
-              queryError instanceof Error ? queryError.message : "Unknown error"
+              queryError instanceof Error ? queryError.message : 'Unknown error'
             }
-            `.trim();
+            `.trim()
 
             setChatHistory((prev) => [
               ...prev,
               {
-                role: "assistant",
+                role: 'assistant',
                 content: errorResponse,
               },
-            ]);
+            ])
           }
         } else {
           // No SQL in response, just show the explanation
           setChatHistory((prev) => [
             ...prev,
             {
-              role: "assistant",
+              role: 'assistant',
               content: response.content,
             },
-          ]);
+          ])
         }
       } catch (error) {
-        console.error("Chat error:", error);
+        console.error('Chat error:', error)
         setChatHistory((prev) => [
           ...prev,
           {
-            role: "assistant",
+            role: 'assistant',
             content:
-              "I apologize, but I encountered an error while processing your request.",
+              'I apologize, but I encountered an error while processing your request.',
           },
-        ]);
+        ])
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     }
-  };
+  }
 
   const handleSaveChart = async () => {
-    if (!lastQueryResult?.data || !lastQueryResult.sql) return;
+    if (!lastQueryResult?.data || !lastQueryResult.sql) return
 
-    setSavingToDashboard(true);
-    setSaveError(null);
+    setSavingToDashboard(true)
+    setSaveError(null)
 
     try {
-      let dashboardId: string;
+      let dashboardId: string
 
-      if (view === "dashboard") {
+      if (view === 'dashboard') {
         // Get dashboard ID from title
-        const dashboards = await DashboardService.getDashboards();
-        const dashboard = dashboards.find((d) => d.title === dashboardTitle);
+        const dashboards = await DashboardService.getDashboards()
+        const dashboard = dashboards.find((d) => d.title === dashboardTitle)
         if (!dashboard) {
-          throw new DashboardError("Dashboard not found");
+          throw new DashboardError('Dashboard not found')
         }
-        dashboardId = dashboard.id;
+        dashboardId = dashboard.id
       } else {
         // Create new dashboard
         const dashboard = await DashboardService.createDashboard({
           title: `Dashboard ${new Date().toLocaleTimeString()}`,
           user_id: profile.id,
-          creation_method: "chat",
+          creation_method: 'chat',
           is_public: false,
-        });
-        dashboardId = dashboard.id;
+        })
+        dashboardId = dashboard.id
       }
 
       // Get next position
-      const position = await DashboardService.getNextPosition(dashboardId);
+      const position = await DashboardService.getNextPosition(dashboardId)
 
       // Prepare chart configuration
-      const data = lastQueryResult.data;
+      const data = lastQueryResult.data
       const configuration: ChartConfiguration = {
         type: selectedChartType,
         labels: data.map((row) => Object.values(row)[0].toString()),
@@ -324,107 +328,142 @@ But there was an error: ${
           {
             data: data.map((row) => Number(Object.values(row)[1])),
             backgroundColor: [
-              "#167147",
-              "#4E7BE9",
-              "#4EE997",
-              "#E94E7B",
-              "#7BE94E",
-              "#E9974E",
+              '#167147',
+              '#4E7BE9',
+              '#4EE997',
+              '#E94E7B',
+              '#7BE94E',
+              '#E9974E',
             ],
-            borderColor: "#167147",
+            borderColor: '#167147',
           },
         ],
-      };
+      }
 
       // Add component to dashboard
       const component = await DashboardService.addComponent({
         dashboard_id: dashboardId,
-        type: "chart",
+        type: 'chart',
         configuration,
         query_text: lastQueryResult.sql,
         chat_prompt: message,
         position,
-      });
+      })
 
-      setShowSaveDialog(false);
+      setShowSaveDialog(false)
 
       // Show success message
       setChatHistory((prev) => [
         ...prev,
         {
-          role: "assistant",
+          role: 'assistant',
           content: `Chart has been successfully saved to ${
-            view === "dashboard" ? "the" : "a new"
+            view === 'dashboard' ? 'the' : 'a new'
           } dashboard! ${
-            view !== "dashboard"
+            view !== 'dashboard'
               ? '\n\nYou can find it in the sidebar under "Dashboards".'
-              : ""
+              : ''
           }`,
         },
-      ]);
+      ])
 
       // If we created a new dashboard, switch to it
-      if (view !== "dashboard") {
-        onViewChange?.("dashboard", dashboard.title);
+      if (view !== 'dashboard') {
+        onViewChange?.('dashboard', dashboard.title)
       }
     } catch (error) {
-      console.error("Error saving chart:", error);
+      console.error('Error saving chart:', error)
       setSaveError(
         error instanceof DashboardError
           ? error.message
-          : "Failed to save chart to dashboard"
-      );
+          : 'Failed to save chart to dashboard',
+      )
     } finally {
-      setSavingToDashboard(false);
+      setSavingToDashboard(false)
     }
-  };
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setMessage(value);
+    const value = e.target.value
+    setMessage(value)
 
     // Check for @ mentions
-    const lastAtIndex = value.lastIndexOf("@");
+    const lastAtIndex = value.lastIndexOf('@')
     if (lastAtIndex !== -1) {
-      const searchText = value.slice(lastAtIndex + 1);
-      setMentionSearch(searchText);
+      const searchText = value.slice(lastAtIndex + 1)
+      setMentionSearch(searchText)
 
       // Calculate dropdown position
       if (inputRef.current) {
-        const inputRect = inputRef.current.getBoundingClientRect();
-        const caretPosition = inputRef.current.selectionStart || 0;
-        const textBeforeCaret = value.substring(0, caretPosition);
-        const tempSpan = document.createElement("span");
-        tempSpan.style.font = window.getComputedStyle(inputRef.current).font;
-        tempSpan.textContent = textBeforeCaret;
-        document.body.appendChild(tempSpan);
-        const caretOffset = tempSpan.offsetWidth;
-        document.body.removeChild(tempSpan);
+        const inputRect = inputRef.current.getBoundingClientRect()
+        const caretPosition = inputRef.current.selectionStart || 0
+        const textBeforeCaret = value.substring(0, caretPosition)
+        const tempSpan = document.createElement('span')
+        tempSpan.style.font = window.getComputedStyle(inputRef.current).font
+        tempSpan.textContent = textBeforeCaret
+        document.body.appendChild(tempSpan)
+        const caretOffset = tempSpan.offsetWidth
+        document.body.removeChild(tempSpan)
 
         setMentionPosition({
           top: inputRect.bottom + window.scrollY + 5,
           left: inputRect.left + caretOffset,
-        });
+        })
       }
     } else {
-      setMentionSearch("");
+      setMentionSearch('')
     }
-  };
+
+    // Check for # tags
+    const lastMetricIndex = value.lastIndexOf('#')
+    if (lastMetricIndex !== -1) {
+      const searchText = value.slice(lastMetricIndex + 1)
+      setMetricSearch(searchText)
+
+      // Calculate dropdown position
+      if (inputRef.current) {
+        const inputRect = inputRef.current.getBoundingClientRect()
+        const caretPosition = inputRef.current.selectionStart || 0
+        const textBeforeCaret = value.substring(0, caretPosition)
+        const tempSpan = document.createElement('span')
+        tempSpan.style.font = window.getComputedStyle(inputRef.current).font
+        tempSpan.textContent = textBeforeCaret
+        document.body.appendChild(tempSpan)
+        const caretOffset = tempSpan.offsetWidth
+        document.body.removeChild(tempSpan)
+
+        setMetricPosition({
+          top: inputRect.bottom + window.scrollY + 5,
+          left: inputRect.left + caretOffset,
+        })
+      }
+    } else {
+      setMetricSearch('')
+    }
+  }
 
   const handleMentionSelect = (column: { table: string; name: string }) => {
-    const lastAtIndex = message.lastIndexOf("@");
+    const lastAtIndex = message.lastIndexOf('@')
     if (lastAtIndex !== -1) {
       const newMessage =
-        message.slice(0, lastAtIndex) + `@${column.table}.${column.name} `;
-      setMessage(newMessage);
-      setMentionSearch("");
-      inputRef.current?.focus();
+        message.slice(0, lastAtIndex) + `@${column.table}.${column.name} `
+      setMessage(newMessage)
+      setMentionSearch('')
+      inputRef.current?.focus()
     }
-  };
+  }
+
+  const handleMetricSelect = (metric: {
+    name: string
+    abbreviation: string
+    group: string
+  }) => {
+    console.log('Selected metric:', metric)
+  }
 
   return (
     <div className="chat-container">
-      {view === "chat" && (
+      {view === 'chat' && (
         <>
           <header className="top-header">
             <div className="header-left">
@@ -439,7 +478,7 @@ But there was an error: ${
               onClick={() => setShowProfileMenu(!showProfileMenu)}
             >
               <div className="user-details">
-                <h3>{profile.email.split("@")[0]}</h3>
+                <h3>{profile.email.split('@')[0]}</h3>
                 <span>{profile.email}</span>
               </div>
               <div className="avatar">
@@ -472,13 +511,12 @@ But there was an error: ${
               {chatHistory.map((msg, index) => (
                 <div
                   key={`${msg.role}-${index}`}
-                  className={`message ${msg.role === "user" ? "user" : "ai"}`}
+                  className={`message ${msg.role === 'user' ? 'user' : 'ai'}`}
                 >
                   <div className="message-content">
-                    <p>{msg.content}</p>
-                    {msg.visualization && (
+                    {msg.visualization ? (
                       <div className="visualization-container">
-                        {msg.visualization.type === "metric" ? (
+                        {msg.visualization.type === 'metric' ? (
                           <div className="metric-display">
                             <div className="metric-value">
                               {msg.visualization.data.datasets[0].data[0].toLocaleString()}
@@ -486,19 +524,19 @@ But there was an error: ${
                           </div>
                         ) : (
                           <div className="chart-container">
-                            {msg.visualization.type === "line" && (
+                            {msg.visualization.type === 'line' && (
                               <Line
                                 data={msg.visualization.data}
                                 options={chartOptions}
                               />
                             )}
-                            {msg.visualization.type === "bar" && (
+                            {msg.visualization.type === 'bar' && (
                               <Bar
                                 data={msg.visualization.data}
                                 options={chartOptions}
                               />
                             )}
-                            {msg.visualization.type === "pie" && (
+                            {msg.visualization.type === 'pie' && (
                               <Pie
                                 data={msg.visualization.data}
                                 options={chartOptions}
@@ -507,15 +545,17 @@ But there was an error: ${
                           </div>
                         )}
                       </div>
+                    ) : (
+                      <p>{msg.content}</p>
                     )}
-                    {msg.role === "assistant" &&
+                    {msg.role === 'assistant' &&
                       executionTime &&
                       index === chatHistory.length - 1 && (
                         <div className="execution-time">
                           Executed in {(executionTime / 1000).toFixed(2)}s
                         </div>
                       )}
-                    {msg.role === "assistant" &&
+                    {msg.role === 'assistant' &&
                       lastQueryResult &&
                       index === chatHistory.length - 1 && (
                         <div className="results-table">
@@ -525,7 +565,7 @@ But there was an error: ${
                                 {Object.keys(lastQueryResult.data[0] || {}).map(
                                   (column, index) => (
                                     <th key={index}>{column}</th>
-                                  )
+                                  ),
                                 )}
                               </tr>
                             </thead>
@@ -533,7 +573,7 @@ But there was an error: ${
                               {lastQueryResult.data.map((row, rowIndex) => (
                                 <tr key={rowIndex}>
                                   {Object.keys(
-                                    lastQueryResult.data[0] || {}
+                                    lastQueryResult.data[0] || {},
                                   ).map((column, colIndex) => (
                                     <td key={colIndex}>{row[column]}</td>
                                   ))}
@@ -543,7 +583,7 @@ But there was an error: ${
                           </table>
                         </div>
                       )}
-                    {msg.role === "assistant" &&
+                    {msg.role === 'assistant' &&
                       lastQueryResult &&
                       index === chatHistory.length - 1 && (
                         <div className="message-actions">
@@ -579,6 +619,13 @@ But there was an error: ${
                     position={mentionPosition}
                   />
                 )}
+                {metricSearch && (
+                  <MetricDropdown
+                    metrics={searchMockMetrics(metricSearch)}
+                    onSelect={handleMetricSelect}
+                    position={metricPosition}
+                  />
+                )}
               </div>
               <button type="submit" disabled={isLoading}>
                 {isLoading ? (
@@ -591,8 +638,8 @@ But there was an error: ${
           </div>
         </>
       )}
-      {view !== "chat" &&
-        (view === "metrics" ? (
+      {view !== 'chat' &&
+        (view === 'metrics' ? (
           <MetricsView
             profile={profile}
             title={metricsTitle}
@@ -615,20 +662,20 @@ But there was an error: ${
               <div className="chart-type-buttons">
                 {saveError && <div className="error-message">{saveError}</div>}
                 <button
-                  className={selectedChartType === "line" ? "active" : ""}
-                  onClick={() => setSelectedChartType("line")}
+                  className={selectedChartType === 'line' ? 'active' : ''}
+                  onClick={() => setSelectedChartType('line')}
                 >
                   Line
                 </button>
                 <button
-                  className={selectedChartType === "bar" ? "active" : ""}
-                  onClick={() => setSelectedChartType("bar")}
+                  className={selectedChartType === 'bar' ? 'active' : ''}
+                  onClick={() => setSelectedChartType('bar')}
                 >
                   Bar
                 </button>
                 <button
-                  className={selectedChartType === "pie" ? "active" : ""}
-                  onClick={() => setSelectedChartType("pie")}
+                  className={selectedChartType === 'pie' ? 'active' : ''}
+                  onClick={() => setSelectedChartType('pie')}
                 >
                   Pie
                 </button>
@@ -646,7 +693,7 @@ But there was an error: ${
                 onClick={handleSaveChart}
                 disabled={savingToDashboard}
               >
-                {savingToDashboard ? "Saving..." : "Save Chart"}
+                {savingToDashboard ? 'Saving...' : 'Save Chart'}
               </button>
             </div>
           </div>
@@ -1052,7 +1099,7 @@ But there was an error: ${
           color: var(--text-light);
         }
         
-        .chat-input button {
+        .chat-input>button {
           background: var(--primary-color);
           border: none;
           border-radius: 0.375rem;
@@ -1067,7 +1114,7 @@ But there was an error: ${
           transition: background 0.2s;
         }
         
-        .chat-input button:hover {
+        .chat-input>button:hover {
           background: var(--secondary-color);
         }
         
@@ -1086,7 +1133,7 @@ But there was an error: ${
           }
         }
         
-        .chat-input button:disabled {
+        .chat-input>button:disabled {
           opacity: 0.7;
           cursor: not-allowed;
         }
@@ -1112,7 +1159,7 @@ But there was an error: ${
         }
       `}</style>
     </div>
-  );
-};
+  )
+}
 
-export default ChatMode;
+export default ChatMode

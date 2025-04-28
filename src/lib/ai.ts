@@ -3,8 +3,7 @@ import { ChatQueryService } from "./chatQueryService";
 import { detectVisualizationType } from "./chartDetection";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const OPENROUTER_KEY =
-  "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";
+const OPENROUTER_KEY = "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";
 
 const SQL_EXTRACTION_PROMPT = `
 You are an intelligent SQL agent connected to a Supabase PostgreSQL database. You can act both as a helpful assistant and a data analyst.
@@ -24,8 +23,9 @@ Your behavior depends on the type of user input:
 2. **If the user asks a data-related question**  
 (e.g., anything about counts, metrics, trends, comparisons, summaries, etc.)  
 → Respond using the following strict format:
-
-[SQL query]  
+---SQL---
+[SQL query]
+---END SQL---
 ---CHART---  
 [chart_type]  
 ---END CHART---
@@ -51,13 +51,16 @@ Your behavior depends on the type of user input:
 ---
 
 **Examples:**
-
+---SQL---
 SELECT COUNT(*) FROM customers  
+---END SQL--- 
 ---CHART---  
 metric  
 ---END CHART---
 
+---SQL---
 SELECT category, SUM(price) FROM order_lines JOIN skus ON skus.id = sku_id GROUP BY category  
+---END SQL--- 
 ---CHART---  
 bar  
 ---END CHART---
@@ -207,8 +210,7 @@ export async function chat(messages: ChatMessage[]): Promise<ChatMessage> {
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       throw new Error(
-        `AI API request failed: ${response.status} ${response.statusText}${
-          errorData ? ` - ${JSON.stringify(errorData)}` : ""
+        `AI API request failed: ${response.status} ${response.statusText}${errorData ? ` - ${JSON.stringify(errorData)}` : ""
         }`
       );
     }
@@ -239,10 +241,9 @@ export async function chat(messages: ChatMessage[]): Promise<ChatMessage> {
         \`\`\`json
         ${JSON.stringify(result.data, null, 2)}
         \`\`\`
-        ${
-          chartType
-            ? `\nI suggest visualizing this data as a ${chartType}.\n`
-            : ""
+        ${chartType
+          ? `\nI suggest visualizing this data as a ${chartType}.\n`
+          : ""
         }
         `.trim();
       return {

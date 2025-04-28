@@ -1,33 +1,39 @@
-import React from 'react';
-import type { Column } from '../lib/mockdata';
+import React from 'react'
+import type { Column } from '../lib/mockdata'
 
 interface MentionDropdownProps {
-  columns: Column[];
-  onSelect: (column: Column) => void;
-  position: { top: number; left: number };
+  columns: Column[]
+  onSelect: (column: Column) => void
+  position: { top: number; left: number }
 }
 
-const MentionDropdown: React.FC<MentionDropdownProps> = ({ columns, onSelect, position }) => {
-  if (columns.length === 0) return null;
+const MentionDropdown: React.FC<MentionDropdownProps> = ({
+  columns,
+  onSelect,
+  position,
+}) => {
+  if (columns.length === 0) return null
 
   return (
-    <div 
+    <div
       className="mention-dropdown"
       style={{
         position: 'absolute',
         bottom: '100%',
         left: 0,
-        marginBottom: '0.5rem'
+        marginBottom: '0.5rem',
       }}
     >
-      {Object.entries(columns.reduce((acc, column) => {
-        const tableKey = column.table;
-        if (!acc[tableKey]) {
-          acc[tableKey] = [];
-        }
-        acc[tableKey].push(column);
-        return acc;
-      }, {} as Record<string, Column[]>)).map(([tableName, tableColumns]) => (
+      {Object.entries(
+        columns.reduce((acc, column) => {
+          const tableKey = column.table
+          if (!acc[tableKey]) {
+            acc[tableKey] = []
+          }
+          acc[tableKey].push(column)
+          return acc
+        }, {} as Record<string, Column[]>),
+      ).map(([tableName, tableColumns]) => (
         <div key={tableName} className="mention-section">
           <div className="mention-title">{tableName}</div>
           {tableColumns.map((column) => (
@@ -112,7 +118,7 @@ const MentionDropdown: React.FC<MentionDropdownProps> = ({ columns, onSelect, po
         }
       `}</style>
     </div>
-  );
-};
+  )
+}
 
-export default MentionDropdown;
+export default MentionDropdown

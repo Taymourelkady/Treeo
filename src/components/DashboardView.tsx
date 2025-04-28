@@ -1,9 +1,22 @@
-import React from 'react';
-import { Plus, LineChart, BarChart, PieChart, DollarSign, Users, ShoppingCart, ChevronDown, X, Send, Globe, MoreVertical } from 'lucide-react';
-import { Line, Bar, Pie } from 'react-chartjs-2';
-import ShareDialog from './ShareDialog';
-import { DashboardService } from '../lib/dashboardService';
-import { useProfile } from '../lib/hooks';
+import React from 'react'
+import {
+  Plus,
+  LineChart,
+  BarChart,
+  PieChart,
+  DollarSign,
+  Users,
+  ShoppingCart,
+  ChevronDown,
+  X,
+  Send,
+  Globe,
+  MoreVertical,
+} from 'lucide-react'
+import { Line, Bar, Pie } from 'react-chartjs-2'
+import ShareDialog from './ShareDialog'
+import { DashboardService } from '../lib/dashboardService'
+import { useProfile } from '../lib/hooks'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,8 +27,8 @@ import {
   ArcElement,
   Title,
   Tooltip,
-  Legend
-} from 'chart.js';
+  Legend,
+} from 'chart.js'
 
 ChartJS.register(
   CategoryScale,
@@ -26,23 +39,23 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
-);
+  Legend,
+)
 
 interface DashboardViewProps {
-  title: string;
-  profile: Profile;
-  isNew?: boolean;
+  title: string
+  profile: Profile
+  isNew?: boolean
 }
 
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
 
-type ChartType = 'line' | 'bar' | 'pie';
+type ChartType = 'line' | 'bar' | 'pie'
 
 interface Currency {
-  code: string;
-  symbol: string;
-  rate: number;
+  code: string
+  symbol: string
+  rate: number
 }
 
 const currencies: Currency[] = [
@@ -50,43 +63,47 @@ const currencies: Currency[] = [
   { code: 'EUR', symbol: '€', rate: 0.92 },
   { code: 'GBP', symbol: '£', rate: 0.79 },
   { code: 'JPY', symbol: '¥', rate: 151.42 },
-];
+]
 
 interface ChartConfig {
-  type: ChartType;
-  data: any;
-  options: any;
+  type: ChartType
+  data: any
+  options: any
 }
 
 const salesData = {
   labels: months,
-  datasets: [{
-    data: [3000, 3200, 4500, 4200, 5800, 5500],
-    borderColor: '#167147',
-    tension: 0.4,
-    pointRadius: 0,
-    borderWidth: 2,
-  }]
-};
+  datasets: [
+    {
+      data: [3000, 3200, 4500, 4200, 5800, 5500],
+      borderColor: '#167147',
+      tension: 0.4,
+      pointRadius: 0,
+      borderWidth: 2,
+    },
+  ],
+}
 
 const revenueData = {
   labels: months,
-  datasets: [{
-    data: [9000, 9500, 14000, 13500, 16000, 15000],
-    borderColor: '#167147',
-    tension: 0.4,
-    pointRadius: 0,
-    borderWidth: 2,
-  }]
-};
+  datasets: [
+    {
+      data: [9000, 9500, 14000, 13500, 16000, 15000],
+      borderColor: '#167147',
+      tension: 0.4,
+      pointRadius: 0,
+      borderWidth: 2,
+    },
+  ],
+}
 
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      display: false
-    }
+      display: false,
+    },
   },
   scales: {
     x: {
@@ -97,9 +114,9 @@ const chartOptions = {
       ticks: {
         color: '#94a3b8',
         font: {
-          size: 12
-        }
-      }
+          size: 12,
+        },
+      },
     },
     y: {
       grid: {
@@ -109,128 +126,164 @@ const chartOptions = {
       ticks: {
         color: '#94a3b8',
         font: {
-          size: 12
-        }
-      }
-    }
-  }
-};
+          size: 12,
+        },
+      },
+    },
+  },
+}
 
-const DashboardView = ({ title, profile, isNew = false }: DashboardViewProps) => {
-  const [showNewChart, setShowNewChart] = React.useState(false);
-  const [selectedCurrency, setSelectedCurrency] = React.useState<Currency>(currencies[0]);
-  const [showCurrencyDropdown, setShowCurrencyDropdown] = React.useState(false);
-  const [salesChartType, setSalesChartType] = React.useState<ChartType>('line');
-  const [revenueChartType, setRevenueChartType] = React.useState<ChartType>('line');
-  const [activeMenu, setActiveMenu] = React.useState<string | null>(null);
-  const [chartDescription, setChartDescription] = React.useState('');
-  const [chatHistory, setChatHistory] = React.useState<Array<{ type: 'user' | 'ai'; message: string }>>([]);
-  const [showAccessLevels, setShowAccessLevels] = React.useState(false);
-  const [selectedAccessLevel, setSelectedAccessLevel] = React.useState('Admin');
-  const [shareDialog, setShareDialog] = React.useState<{ isOpen: boolean; title: string }>({ isOpen: false, title: '' });
-  
+const DashboardView = ({
+  title,
+  profile,
+  isNew = false,
+}: DashboardViewProps) => {
+  const [showNewChart, setShowNewChart] = React.useState(false)
+  const [selectedCurrency, setSelectedCurrency] = React.useState<Currency>(
+    currencies[0],
+  )
+  const [showCurrencyDropdown, setShowCurrencyDropdown] = React.useState(false)
+  const [salesChartType, setSalesChartType] = React.useState<ChartType>('line')
+  const [revenueChartType, setRevenueChartType] = React.useState<ChartType>(
+    'line',
+  )
+  const [activeMenu, setActiveMenu] = React.useState<string | null>(null)
+  const [chartDescription, setChartDescription] = React.useState('')
+  const [chatHistory, setChatHistory] = React.useState<
+    Array<{ type: 'user' | 'ai'; message: string }>
+  >([])
+  const [showAccessLevels, setShowAccessLevels] = React.useState(false)
+  const [selectedAccessLevel, setSelectedAccessLevel] = React.useState('Admin')
+  const [shareDialog, setShareDialog] = React.useState<{
+    isOpen: boolean
+    title: string
+  }>({ isOpen: false, title: '' })
+
   React.useEffect(() => {
     if (isNew) {
-      setShowNewChart(true);
+      setShowNewChart(true)
     }
-  }, [isNew]);
+  }, [isNew])
 
-  const salesMenuRef = React.useRef<HTMLDivElement>(null);
-  const revenueMenuRef = React.useRef<HTMLDivElement>(null);
-  const customersMenuRef = React.useRef<HTMLDivElement>(null);
-  const ordersMenuRef = React.useRef<HTMLDivElement>(null);
-  const accessLevelRef = React.useRef<HTMLDivElement>(null);
+  const salesMenuRef = React.useRef<HTMLDivElement>(null)
+  const revenueMenuRef = React.useRef<HTMLDivElement>(null)
+  const customersMenuRef = React.useRef<HTMLDivElement>(null)
+  const ordersMenuRef = React.useRef<HTMLDivElement>(null)
+  const accessLevelRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const refs = [salesMenuRef, revenueMenuRef, customersMenuRef, ordersMenuRef];
-      if (!refs.some(ref => ref.current?.contains(event.target as Node)) && 
-          !accessLevelRef.current?.contains(event.target as Node)) {
-        setActiveMenu(null);
-        setShowAccessLevels(false);
+      const refs = [
+        salesMenuRef,
+        revenueMenuRef,
+        customersMenuRef,
+        ordersMenuRef,
+      ]
+      if (
+        !refs.some((ref) => ref.current?.contains(event.target as Node)) &&
+        !accessLevelRef.current?.contains(event.target as Node)
+      ) {
+        setActiveMenu(null)
+        setShowAccessLevels(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const formatCurrency = (amount: number) => {
-    const convertedAmount = amount * selectedCurrency.rate;
-    return `${selectedCurrency.symbol}${convertedAmount.toLocaleString('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })}`;
-  };
+    const convertedAmount = amount * selectedCurrency.rate
+    return `${selectedCurrency.symbol}${convertedAmount.toLocaleString(
+      'en-US',
+      {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      },
+    )}`
+  }
 
   const getChartComponent = (type: ChartType, data: any, options: any) => {
     switch (type) {
       case 'bar':
-        return <Bar data={data} options={options} />;
+        return <Bar data={data} options={options} />
       case 'pie':
-        return <Pie data={{
-          labels: data.labels,
-          datasets: [{
-            data: data.datasets[0].data,
-            backgroundColor: [
-              '#167147',
-              '#4E7BE9',
-              '#4EE997',
-              '#E94E7B',
-              '#7BE94E',
-              '#E9974E'
-            ]
-          }]
-        }} options={{
-          ...options,
-          aspectRatio: 2
-        }} />;
+        return (
+          <Pie
+            data={{
+              labels: data.labels,
+              datasets: [
+                {
+                  data: data.datasets[0].data,
+                  backgroundColor: [
+                    '#167147',
+                    '#4E7BE9',
+                    '#4EE997',
+                    '#E94E7B',
+                    '#7BE94E',
+                    '#E9974E',
+                  ],
+                },
+              ],
+            }}
+            options={{
+              ...options,
+              aspectRatio: 2,
+            }}
+          />
+        )
       default:
-        return <Line data={data} options={options} />;
+        return <Line data={data} options={options} />
     }
-  };
+  }
 
   const getChartIcon = (type: ChartType) => {
     switch (type) {
       case 'bar':
-        return <BarChart size={16} />;
+        return <BarChart size={16} />
       case 'pie':
-        return <PieChart size={16} />;
+        return <PieChart size={16} />
       default:
-        return <LineChart size={16} />;
+        return <LineChart size={16} />
     }
-  };
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (chartDescription.trim()) {
-      setChatHistory([...chatHistory, { type: 'user', message: chartDescription }]);
+      setChatHistory([
+        ...chatHistory,
+        { type: 'user', message: chartDescription },
+      ])
       // Simulate AI response
       setTimeout(() => {
-        setChatHistory(prev => [...prev, { 
-          type: 'ai', 
-          message: `I'll help you create a chart based on "${chartDescription}". What type of visualization would you prefer?` 
-        }]);
-      }, 1000);
-      setChartDescription('');
+        setChatHistory((prev) => [
+          ...prev,
+          {
+            type: 'ai',
+            message: `I'll help you create a chart based on "${chartDescription}". What type of visualization would you prefer?`,
+          },
+        ])
+      }, 1000)
+      setChartDescription('')
     }
-  };
+  }
 
   const handleDeleteDashboard = async (id: string) => {
     try {
-      await DashboardService.deleteDashboard(id);
+      await DashboardService.deleteDashboard(id)
       // Optionally trigger a refresh or navigation
     } catch (error) {
-      console.error('Failed to delete dashboard:', error);
+      console.error('Failed to delete dashboard:', error)
     }
-  };
+  }
 
   return (
     <div className="dashboard-container">
       <header className="top-header">
         <div className="header-left">
           <div className="access-level-container" ref={accessLevelRef}>
-            <button 
+            <button
               className="access-level"
               onClick={() => setShowAccessLevels(!showAccessLevels)}
             >
@@ -239,13 +292,21 @@ const DashboardView = ({ title, profile, isNew = false }: DashboardViewProps) =>
             </button>
             {showAccessLevels && (
               <div className="access-level-dropdown">
-                {['Admin', 'Data Science', 'Sales', 'Operations', 'Product'].map((level) => (
+                {[
+                  'Admin',
+                  'Data Science',
+                  'Sales',
+                  'Operations',
+                  'Product',
+                ].map((level) => (
                   <button
                     key={level}
-                    className={`access-level-option ${level === selectedAccessLevel ? 'active' : ''}`}
+                    className={`access-level-option ${
+                      level === selectedAccessLevel ? 'active' : ''
+                    }`}
                     onClick={() => {
-                      setSelectedAccessLevel(level);
-                      setShowAccessLevels(false);
+                      setSelectedAccessLevel(level)
+                      setShowAccessLevels(false)
                     }}
                   >
                     {level}
@@ -260,7 +321,9 @@ const DashboardView = ({ title, profile, isNew = false }: DashboardViewProps) =>
             <h3>{profile.email.split('@')[0]}</h3>
             <span>{profile.email}</span>
           </div>
-          <div className="avatar">{profile.email.substring(0, 2).toUpperCase()}</div>
+          <div className="avatar">
+            {profile.email.substring(0, 2).toUpperCase()}
+          </div>
         </div>
       </header>
 
@@ -270,8 +333,8 @@ const DashboardView = ({ title, profile, isNew = false }: DashboardViewProps) =>
             <h1>{title}</h1>
             <p className="subtitle">Real-time analytics and insights</p>
             <div className="currency-selector">
-              <button 
-                className="currency-button" 
+              <button
+                className="currency-button"
                 onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}
               >
                 <Globe size={14} />
@@ -283,10 +346,12 @@ const DashboardView = ({ title, profile, isNew = false }: DashboardViewProps) =>
                   {currencies.map((currency) => (
                     <button
                       key={currency.code}
-                      className={`currency-option ${currency.code === selectedCurrency.code ? 'active' : ''}`}
+                      className={`currency-option ${
+                        currency.code === selectedCurrency.code ? 'active' : ''
+                      }`}
                       onClick={() => {
-                        setSelectedCurrency(currency);
-                        setShowCurrencyDropdown(false);
+                        setSelectedCurrency(currency)
+                        setShowCurrencyDropdown(false)
                       }}
                     >
                       <span>{currency.symbol}</span>
@@ -297,7 +362,10 @@ const DashboardView = ({ title, profile, isNew = false }: DashboardViewProps) =>
               )}
             </div>
           </div>
-          <button className="add-chart-button" onClick={() => setShowNewChart(true)}>
+          <button
+            className="add-chart-button"
+            onClick={() => setShowNewChart(true)}
+          >
             <Plus size={16} />
             Add Chart
           </button>
@@ -308,7 +376,10 @@ const DashboardView = ({ title, profile, isNew = false }: DashboardViewProps) =>
             <div className="metric-card new-chart">
               <div className="new-chart-header">
                 <h3>Create New Chart</h3>
-                <button className="close-button" onClick={() => setShowNewChart(false)}>
+                <button
+                  className="close-button"
+                  onClick={() => setShowNewChart(false)}
+                >
                   <X size={16} />
                 </button>
               </div>
@@ -322,230 +393,242 @@ const DashboardView = ({ title, profile, isNew = false }: DashboardViewProps) =>
                 </div>
                 <form className="chat-input" onSubmit={handleSubmit}>
                   <input
-                      type="text"
-                      value={chartDescription}
-                      onChange={(e) => setChartDescription(e.target.value)}
-                      placeholder="Describe the chart you want to create..."
-                    />
-                    <button type="submit">
-                      <Send size={20} />
-                    </button>
+                    type="text"
+                    value={chartDescription}
+                    onChange={(e) => setChartDescription(e.target.value)}
+                    placeholder="Describe the chart you want to create..."
+                  />
+                  <button type="submit">
+                    <Send size={20} />
+                  </button>
                 </form>
               </div>
             </div>
           )}
 
-          {!isNew && <div className="metric-card">
-            <div className="metric-header">
-              <h3>Total Sales</h3>
-              <div className="metric-actions">
-                <div className="menu-container" ref={salesMenuRef}>
-                  <button 
-                    className="menu-trigger"
-                    onClick={() => setActiveMenu(activeMenu === 'sales' ? null : 'sales')}
-                  >
-                    <MoreVertical size={16} />
+          {!isNew && (
+            <div className="metric-card">
+              <div className="metric-header">
+                <h3>Total Sales</h3>
+                <div className="metric-actions">
+                  <div className="menu-container" ref={salesMenuRef}>
+                    <button
+                      className="menu-trigger"
+                      onClick={() =>
+                        setActiveMenu(activeMenu === 'sales' ? null : 'sales')
+                      }
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                    {activeMenu === 'sales' && (
+                      <div className="menu-dropdown">
+                        <button
+                          className="menu-item"
+                          onClick={() => {
+                            setShareDialog({
+                              isOpen: true,
+                              title: 'Total Sales',
+                            })
+                            setActiveMenu(null)
+                          }}
+                        >
+                          Manage Access
+                        </button>
+                        <button className="menu-item">Duplicate</button>
+                        <button
+                          className="menu-item delete"
+                          onClick={() => handleDeleteDashboard(id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="chart-type-buttons">
+                    <button
+                      className={salesChartType === 'line' ? 'active' : ''}
+                      onClick={() => setSalesChartType('line')}
+                    >
+                      <LineChart size={16} />
+                    </button>
+                    <button
+                      className={salesChartType === 'bar' ? 'active' : ''}
+                      onClick={() => setSalesChartType('bar')}
+                    >
+                      <BarChart size={16} />
+                    </button>
+                    <button
+                      className={salesChartType === 'pie' ? 'active' : ''}
+                      onClick={() => setSalesChartType('pie')}
+                    >
+                      <PieChart size={16} />
+                    </button>
+                  </div>
+                  <button>
+                    <DollarSign size={16} className="icon-button" />
                   </button>
-                  {activeMenu === 'sales' && (
-                    <div className="menu-dropdown">
-                      <button 
-                        className="menu-item"
-                        onClick={() => {
-                          setShareDialog({ isOpen: true, title: 'Total Sales' });
-                          setActiveMenu(null);
-                        }}
-                      >
-                        Manage Access
-                      </button>
-                      <button className="menu-item">
-                        Duplicate
-                      </button>
-                      <button 
-                        className="menu-item delete"
-                        onClick={() => handleDeleteDashboard(id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
                 </div>
-                <div className="chart-type-buttons">
-                  <button 
-                    className={salesChartType === 'line' ? 'active' : ''} 
-                    onClick={() => setSalesChartType('line')}
-                  >
-                    <LineChart size={16} />
-                  </button>
-                  <button 
-                    className={salesChartType === 'bar' ? 'active' : ''} 
-                    onClick={() => setSalesChartType('bar')}
-                  >
-                    <BarChart size={16} />
-                  </button>
-                  <button 
-                    className={salesChartType === 'pie' ? 'active' : ''} 
-                    onClick={() => setSalesChartType('pie')}
-                  >
-                    <PieChart size={16} />
-                  </button>
-                </div>
-                <button><DollarSign size={16} className="icon-button" /></button>
+              </div>
+              <div className="metric-value">{formatCurrency(24500)}</div>
+              <div className="metric-trend positive">
+                +12.5% from last month
+              </div>
+              <div className="metric-chart" style={{ height: '150px' }}>
+                {getChartComponent(salesChartType, salesData, chartOptions)}
               </div>
             </div>
-            <div className="metric-value">{formatCurrency(24500)}</div>
-            <div className="metric-trend positive">
-              +12.5% from last month
-            </div>
-            <div className="metric-chart" style={{ height: '150px' }}>
-              {getChartComponent(salesChartType, salesData, chartOptions)}
-            </div>
-          </div>}
+          )}
 
-          {!isNew && <div className="metric-card">
-            <div className="metric-header">
-              <h3>Revenue</h3>
-              <div className="metric-actions">
-                <div className="menu-container" ref={revenueMenuRef}>
-                  <button 
-                    className="menu-trigger"
-                    onClick={() => setActiveMenu(activeMenu === 'revenue' ? null : 'revenue')}
-                  >
-                    <MoreVertical size={16} />
-                  </button>
-                  {activeMenu === 'revenue' && (
-                    <div className="menu-dropdown">
-                      <button 
-                        className="menu-item"
-                        onClick={() => {
-                          setShareDialog({ isOpen: true, title: 'Revenue' });
-                          setActiveMenu(null);
-                        }}
-                      >
-                        Manage Access
-                      </button>
-                      <button className="menu-item">
-                        Duplicate
-                      </button>
-                      <button className="menu-item delete">
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <div className="chart-type-buttons">
-                  <button 
-                    className={revenueChartType === 'line' ? 'active' : ''} 
-                    onClick={() => setRevenueChartType('line')}
-                  >
-                    <LineChart size={16} />
-                  </button>
-                  <button 
-                    className={revenueChartType === 'bar' ? 'active' : ''} 
-                    onClick={() => setRevenueChartType('bar')}
-                  >
-                    <BarChart size={16} />
-                  </button>
-                  <button 
-                    className={revenueChartType === 'pie' ? 'active' : ''} 
-                    onClick={() => setRevenueChartType('pie')}
-                  >
-                    <PieChart size={16} />
-                  </button>
+          {!isNew && (
+            <div className="metric-card">
+              <div className="metric-header">
+                <h3>Revenue</h3>
+                <div className="metric-actions">
+                  <div className="menu-container" ref={revenueMenuRef}>
+                    <button
+                      className="menu-trigger"
+                      onClick={() =>
+                        setActiveMenu(
+                          activeMenu === 'revenue' ? null : 'revenue',
+                        )
+                      }
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                    {activeMenu === 'revenue' && (
+                      <div className="menu-dropdown">
+                        <button
+                          className="menu-item"
+                          onClick={() => {
+                            setShareDialog({ isOpen: true, title: 'Revenue' })
+                            setActiveMenu(null)
+                          }}
+                        >
+                          Manage Access
+                        </button>
+                        <button className="menu-item">Duplicate</button>
+                        <button className="menu-item delete">Delete</button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="chart-type-buttons">
+                    <button
+                      className={revenueChartType === 'line' ? 'active' : ''}
+                      onClick={() => setRevenueChartType('line')}
+                    >
+                      <LineChart size={16} />
+                    </button>
+                    <button
+                      className={revenueChartType === 'bar' ? 'active' : ''}
+                      onClick={() => setRevenueChartType('bar')}
+                    >
+                      <BarChart size={16} />
+                    </button>
+                    <button
+                      className={revenueChartType === 'pie' ? 'active' : ''}
+                      onClick={() => setRevenueChartType('pie')}
+                    >
+                      <PieChart size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
+              <div className="metric-value">{formatCurrency(73500)}</div>
+              <div className="metric-trend positive">+8.2% from last month</div>
+              <div className="metric-chart" style={{ height: '150px' }}>
+                {getChartComponent(revenueChartType, revenueData, chartOptions)}
+              </div>
             </div>
-            <div className="metric-value">{formatCurrency(73500)}</div>
-            <div className="metric-trend positive">
-              +8.2% from last month
-            </div>
-            <div className="metric-chart" style={{ height: '150px' }}>
-              {getChartComponent(revenueChartType, revenueData, chartOptions)}
-            </div>
-          </div>}
+          )}
 
-          {!isNew && <div className="metric-card">
-            <div className="metric-header">
-              <h3>Active Customers</h3>
-              <div className="metric-actions">
-                <div className="menu-container" ref={customersMenuRef}>
-                  <button 
-                    className="menu-trigger"
-                    onClick={() => setActiveMenu(activeMenu === 'customers' ? null : 'customers')}
-                  >
-                    <MoreVertical size={16} />
+          {!isNew && (
+            <div className="metric-card">
+              <div className="metric-header">
+                <h3>Active Customers</h3>
+                <div className="metric-actions">
+                  <div className="menu-container" ref={customersMenuRef}>
+                    <button
+                      className="menu-trigger"
+                      onClick={() =>
+                        setActiveMenu(
+                          activeMenu === 'customers' ? null : 'customers',
+                        )
+                      }
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                    {activeMenu === 'customers' && (
+                      <div className="menu-dropdown">
+                        <button
+                          className="menu-item"
+                          onClick={() => {
+                            setShareDialog({
+                              isOpen: true,
+                              title: 'Active Customers',
+                            })
+                            setActiveMenu(null)
+                          }}
+                        >
+                          Manage Access
+                        </button>
+                        <button className="menu-item">Duplicate</button>
+                        <button className="menu-item delete">Delete</button>
+                      </div>
+                    )}
+                  </div>
+                  <button>
+                    <Users size={16} />
                   </button>
-                  {activeMenu === 'customers' && (
-                    <div className="menu-dropdown">
-                      <button 
-                        className="menu-item"
-                        onClick={() => {
-                          setShareDialog({ isOpen: true, title: 'Active Customers' });
-                          setActiveMenu(null);
-                        }}
-                      >
-                        Manage Access
-                      </button>
-                      <button className="menu-item">
-                        Duplicate
-                      </button>
-                      <button className="menu-item delete">
-                        Delete
-                      </button>
-                    </div>
-                  )}
                 </div>
-                <button><Users size={16} /></button>
               </div>
+              <div className="metric-value">1,234</div>
+              <div className="metric-trend negative">-2.3% from last month</div>
             </div>
-            <div className="metric-value">1,234</div>
-            <div className="metric-trend negative">
-              -2.3% from last month
-            </div>
-          </div>}
+          )}
 
-          {!isNew && <div className="metric-card">
-            <div className="metric-header">
-              <h3>Orders</h3>
-              <div className="metric-actions">
-                <div className="menu-container" ref={ordersMenuRef}>
-                  <button 
-                    className="menu-trigger"
-                    onClick={() => setActiveMenu(activeMenu === 'orders' ? null : 'orders')}
-                  >
-                    <MoreVertical size={16} />
+          {!isNew && (
+            <div className="metric-card">
+              <div className="metric-header">
+                <h3>Orders</h3>
+                <div className="metric-actions">
+                  <div className="menu-container" ref={ordersMenuRef}>
+                    <button
+                      className="menu-trigger"
+                      onClick={() =>
+                        setActiveMenu(activeMenu === 'orders' ? null : 'orders')
+                      }
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                    {activeMenu === 'orders' && (
+                      <div className="menu-dropdown">
+                        <button
+                          className="menu-item"
+                          onClick={() => {
+                            setShareDialog({ isOpen: true, title: 'Orders' })
+                            setActiveMenu(null)
+                          }}
+                        >
+                          Manage Access
+                        </button>
+                        <button className="menu-item">Duplicate</button>
+                        <button className="menu-item delete">Delete</button>
+                      </div>
+                    )}
+                  </div>
+                  <button>
+                    <ShoppingCart size={16} />
                   </button>
-                  {activeMenu === 'orders' && (
-                    <div className="menu-dropdown">
-                      <button 
-                        className="menu-item"
-                        onClick={() => {
-                          setShareDialog({ isOpen: true, title: 'Orders' });
-                          setActiveMenu(null);
-                        }}
-                      >
-                        Manage Access
-                      </button>
-                      <button className="menu-item">
-                        Duplicate
-                      </button>
-                      <button className="menu-item delete">
-                        Delete
-                      </button>
-                    </div>
-                  )}
                 </div>
-                <button><ShoppingCart size={16} /></button>
               </div>
+              <div className="metric-value">856</div>
+              <div className="metric-trend positive">+5.7% from last month</div>
             </div>
-            <div className="metric-value">856</div>
-            <div className="metric-trend positive">
-              +5.7% from last month
-            </div>
-          </div>}
+          )}
         </div>
       </div>
-      
-      <ShareDialog 
+
+      <ShareDialog
         isOpen={shareDialog.isOpen}
         onClose={() => setShareDialog({ isOpen: false, title: '' })}
         title={shareDialog.title}
@@ -1036,7 +1119,7 @@ const DashboardView = ({ title, profile, isNew = false }: DashboardViewProps) =>
           border-color: var(--primary-color);
         }
 
-        .chat-input button {
+        .chat-input>button {
           padding: 0.75rem;
           background: var(--primary-color);
           border: none;
@@ -1048,12 +1131,12 @@ const DashboardView = ({ title, profile, isNew = false }: DashboardViewProps) =>
           justify-content: center;
         }
 
-        .chat-input button:hover {
+        .chat-input>button:hover {
           opacity: 0.9;
         }
       `}</style>
     </div>
-  );
-};
+  )
+}
 
-export default DashboardView;
+export default DashboardView
